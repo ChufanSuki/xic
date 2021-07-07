@@ -1,0 +1,1 @@
+cat make_jar_executable.sh out/artifacts/xic_jar/xic.jar > xic && chmod +x xic
