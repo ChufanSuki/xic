@@ -21,7 +21,7 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
-      run: ./xic-build
+      run: chmod +x xic-build && ./xic-build
     - name: Upload a JAR Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
