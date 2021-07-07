@@ -21,16 +21,14 @@ jobs:
     - name: Grant execute permission for gradlew
         run: chmod +x gradlew
     - name: Build with Gradle
-        run: ./gradlew build
+        run: ./xic-build
     - name: Upload a JAR Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
         # Artifact name
         name: xi-compiler-jar
         # A file, directory or wildcard pattern that describes what to upload
-        path: target/xic-compiler-1.0-SNAPSHOT.jar
-    - name: Build with scripts
-      run: chmod +x build.sh && bash build.sh
+        path: build/lib/all-in-one-jar-1.0-SNAPSHOT.jar
     - name: Upload a EXE Artifact
       uses: actions/upload-artifact@v2.2.3
       with:
