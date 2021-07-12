@@ -21,6 +21,102 @@ nonterminal program;
 start with program;
 
 // Recognizes "Hello World!", but not much else.
-program ::= USE IDENTIFIER IDENTIFIER OPEN_PAREN IDENTIFIER COLON
-  INT OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET CLOSE_BRACKET CLOSE_PAREN
-  OPEN_BRACE IDENTIFIER OPEN_PAREN STRING_LITERAL CLOSE_PAREN CLOSE_BRACE;
+
+source ::= interface:i
+| program:p;
+
+interface ::= decl:d
+| interface:i decl:d;
+
+program ::= importlist defnlist;
+
+decl ::= ID:n LPAREN RPAREN
+| ID:n LPAREN RPAREN COLON type:t
+| ID:n LPAREN annotated_varlist:p RPAREN COLON type:t
+| ID:n LPAREN annotated_varlist:p RPAREN;
+
+defnlist ::= defn:d
+| defnlist defn;
+
+defn ::= ID:n LPAREN RPAREN block:b
+| ID:n LPAREN RPAREN COLON type:t block:b
+| ID:n LPAREN annotated_varlist:p RPAREN COLON type:t block:b
+| ID:n LPAREN annotated_varlist:p RPAREN block:b;
+
+importlist ::= use_interface:i
+| importlist:l use_interface:i;
+
+use_interface ::= USE ID:i
+| USE ID:i SEMICOLON;
+
+annotated_varlist ::= annotated_var:a
+| annotated_varlist:l annotated_var:a;
+
+annotated_var ::= ID:i COLON type:t;
+
+type ::= BOOL_TYPE:t
+| INT_TYPE:t
+| type:t LBRAC RBRAC
+| type:t LBRAC expr:e RBRAC
+| type:t1 COMMA type:t2;
+
+block ::= LCURL stmtlist:l RCURL
+| LCURL RCURL;
+
+stmtlist ::= statment:s
+| stmtList:l statment:s
+| stmtList:l return:r;
+
+return ::= RETURN
+| RETURN expr:e
+| return:r SEMICOLON;
+
+statment ::= WHILE expr:e statment:s
+| IF expr:e statment ELSE statment
+| IF expr:e statment
+| ID LPAREN exprlist RPAREN
+| ID LPAREN RPAREN
+| annotated_var
+| annotated_varlist
+| annotated_var EQ expr
+| annotated_varlist EQ exprlist
+| assignable EQ expr
+| assignablelist EQ exprlist
+| block
+| statement COLON;
+
+assignable ::= UNDERSCORE
+| expr:e;
+
+assignablelist ::= assignable
+| assignablelist assignable;
+
+expr ::= binop
+| unop
+| BOOL_LIT
+| INTEGER_LITERAL
+| ID
+| ID LPAREN exprlist RPAREN
+| expr LBRAC expr RBRAC
+| LENGTH LPAREN expr RPAREN
+| LCURL exprlist RCURL
+| LPAREN expr RPAREN;
+
+binop ::= expr AND expr
+| expr OR expr
+| expr PLUS expr
+| expr MINUS expr
+| expr DIV expr
+| expr MULT expr
+| expr EQUAL expr
+| expr NOT_EQUAL expr
+| expr LT expr
+| expr LTE expr
+| expr GT expr
+| expr GTE expr;
+
+unop ::= MINUS expr
+| NOT expr;
+
+exprlist ::= expr
+| exprlist expr;
