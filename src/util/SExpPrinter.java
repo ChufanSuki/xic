@@ -1,4 +1,4 @@
-package edu.cornell.cs.cs4120.util;
+package util;
 
 /**
  * A pretty-printer for S-expressions.

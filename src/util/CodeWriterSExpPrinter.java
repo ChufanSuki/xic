@@ -1,4 +1,4 @@
-package edu.cornell.cs.cs4120.util;
+package util;
 
 import polyglot.util.CodeWriter;
 import polyglot.util.OptimalCodeWriter;
