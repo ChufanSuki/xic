@@ -77,6 +77,7 @@ public class XiToken {
         String type_rep = "";
         switch (tokenType) {
             case INT_LIT:       type_rep = "integer "; break;
+            case BOOL_LIT:      type_rep = "bool"; break;
             case STRING_LIT:    type_rep = "string "; break;
             case CHAR_LIT:      type_rep = "character "; break;
             case ID:            type_rep = "id "; break;

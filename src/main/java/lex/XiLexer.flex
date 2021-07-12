@@ -1,5 +1,5 @@
 package lex;
-
+import java_cup.runtime.*;
 %%
 
 %public
@@ -14,6 +14,7 @@ package lex;
 %}
 
 %unicode
+%cup
 %line
 %column
 
@@ -24,7 +25,7 @@ Letter = [a-zA-Z]
 Digit = [0-9]
 Identifier = {Letter}({Digit}|{Letter}|_|\')*
 Integer = 0|[1-9]{Digit}*
-Float = {Digit}+ "." {Digit}+
+//Float = {Digit}+ "." {Digit}+
 Hex = [a-fA-F0-9]{1,4}
 /* comments */
 Comment = {TraditionalComment} | {EndOfLineComment} | {DocumentationComment}
@@ -54,9 +55,15 @@ CommentContent       = ( [^*] | \*+ [^/*] )*
     /* identifiers */
     {Identifier} { return new XiToken(TokenType.ID, yyline, yycolumn, yytext()); }
     /* literals */
-    {Integer} { return new XiToken(TokenType.INT_LIT, yyline, yycolumn, yytext()); }
+    {Integer} {
+          try {
+              return new XiToken(TokenType.INT_LIT, yyline, yycolumn, Long.parseLong(yytext()));
+          } catch (NumberFormatException e) {
+              return new XiToken(TokenType.ERROR, yyline, yycolumn, "invalid integer");
+          }
+       }
     \" { string.setLength(0); stringLiteralStartCol = yycolumn; yybegin(STRING); }
-    \' { string.setLength(0); charLiteralStartCol = yycolumn; yybegin(CHAR); }
+    \' { charLiteralStartCol = yycolumn; yybegin(CHAR); }
     /* operators */
     "+" { return new XiToken(TokenType.ADD, yyline, yycolumn, yytext()); }
     "-" { return new XiToken(TokenType.MINUS, yyline, yycolumn, yytext()); }
@@ -96,21 +103,24 @@ CommentContent       = ( [^*] | \*+ [^/*] )*
     [^\n\r\"\\]+ { string.append( yytext() ); }
     \\t                            { string.append('\t'); }
     \\n                            { string.append('\n'); }
-
     \\r                            { string.append('\r'); }
     \\\"                           { string.append('\"'); }
-    \\ { string.append("\\"); }
+    \\\'                           { string.append('\''); }
+    \\\\                           { string.append("\\"); }
+    \\.                            { yybegin(YYINITIAL); return new XiToken(TokenType.ERROR, yyline, yycolumn, "invalid escape character"); }
 }
 
 <CHAR> {
-    \' { yybegin(YYINITIAL); if (string.length() != 1) { return new XiToken(TokenType.ERROR, yyline, charLiteralStartCol, "Invalid character constant");  }  else return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, string.charAt(0)); }
-    [^\n\r\'\\]+ { string.append( yytext() ); }
-     \\t                           { string.append('\t'); }
-    \\n                            { string.append('\n'); }
-
-    \\r                            { string.append('\r'); }
-    \\\"                           { string.append('\"'); }
-    \\                             { string.append('\\'); }
+    \' { yybegin(YYINITIAL); return new XiToken(TokenType.ERROR, yyline, charLiteralStartCol, "empty character literal"); }
+    [^\n\r\'\\\"]\' { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, yytext().charAt(0)); }
+    \\x{Hex}\'      { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, Character.forDigit(Integer.parseInt(yytext().substring(2, yylength()), 16), 10)); }
+    \\t\'                           { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, '\t'); }
+    \\n\'                            { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, '\n'); }
+    \\r\'                            { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, '\r');; }
+    \\\"\'                           { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, '\"'); }
+    \\\'\'                           { yybegin(YYINITIAL); return new XiToken(TokenType.CHAR_LIT, yyline, charLiteralStartCol, '\''); }
+    \\.\'                             { yybegin(YYINITIAL); return new XiToken(TokenType.ERROR, yyline, charLiteralStartCol, "invalid escape character"); }
+    [^] {yybegin(YYINITIAL); return new XiToken(TokenType.ERROR, yyline, charLiteralStartCol, "invalid character"); }
 }
 
 /* error fallback */
