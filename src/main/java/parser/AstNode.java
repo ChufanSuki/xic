@@ -1,6 +1,66 @@
 package parser;
 import java.util.*;
 
+enum ExprType{
+    BinopExpr,
+    BoolLiteralExpr,
+    CharLiteralExpr,
+    FunctionCallExpr,
+    IdExpr,
+    IndexExpr,
+    IntLiteralExpr,
+    LengthExpr,
+    ListLiteralExpr,
+    StringLiteralExpr,
+    UnopExpr,
+    UnderscoreExpr
+}
+
+enum StmtType{
+    ProcedureReturnStmt,
+    FunctionReturnStmt,
+    AssignStmt,
+    MultiAssignStmt,
+    DeclStmt,
+    MultiDeclStmt,
+    DeclAssignStmt,
+    MultiDeclAssignStmt,
+    ProcedureCallStmt,
+    IfStmt,
+    IfElseStmt,
+    WhileStmt,
+    BlockStmt
+}
+
+enum TypeType{
+    ListType,
+    TupleType,
+    Tvar
+}
+
+enum Unop{
+    NOT,
+    UMINUS
+}
+
+enum Binop{
+    EQ, //=
+    MINUS,
+    NOT,
+    MULT,
+    HI_MULT,// *>>
+    DIV,
+    MOD,
+    EQEQ,// ==
+    NEQ,
+    GT,
+    LT,
+    GTEQ,
+    LTEQ,
+    AND,
+    OR
+}
+
 class Pair<A, B> {
     private A first;
     private B second;
@@ -23,12 +83,19 @@ class Pair<A, B> {
     }
 }
 
-abstract class Type {}
+abstract class Type {
+    public TypeType t_type;
+
+    public TypeType getT_type() {
+        return t_type;
+    }
+}
 
 class Tvar extends Type {
     private String name;
     Tvar(String name) {
         this.name = name;
+        this.t_type = TypeType.Tvar;
     }
     public String toString() {
         return name;
@@ -38,8 +105,59 @@ class Tvar extends Type {
     }
 }
 
+class ListType extends Type {
+    private Type contentsType;
+    private Expr length;
+
+    ListType(Type type) {
+        this.contentsType = type;
+        this.t_type = TypeType.ListType;
+    }
+
+    ListType(Type type, Expr length) {
+        this.contentsType = type;
+        this.length = length;
+        this.t_type = TypeType.ListType;
+    }
+
+    public String toString() {
+        return contentsType.toString() + " list";
+    }
+
+    public Type getContentsType() {
+        return contentsType;
+    }
+
+    public Expr getLength() {
+        return length;
+    }
+}
+
+class TupleType extends Type {
+    private List<Type> contentsTypes;
+
+    TupleType(List<Type> types) {
+        this.contentsTypes = types;
+        this.t_type = TypeType.TupleType;
+    }
+
+    public String toString() {
+        List<String> typeNames = new ArrayList<>();
+        Arrays.asList(contentsTypes).forEach(elt -> typeNames.add(elt.toString()));
+        return String.join(" * ", typeNames);
+    }
+
+    public List<Type> getContentsTypes() {
+        return contentsTypes;
+    }
+}
+
 abstract class Expr {
-    private Type type;
+    public ExprType e_type;
+
+    public ExprType getE_type() {
+        return e_type;
+    }
 }
 
 class BinopExpr extends Expr {
@@ -51,6 +169,7 @@ class BinopExpr extends Expr {
         this.op = op;
         this.left = left;
         this.right = right;
+        this.e_type = ExprType.BinopExpr;
     }
 
     public String getOp() {
@@ -73,6 +192,7 @@ class UnopExpr extends Expr {
     UnopExpr(String op, Expr expr) {
         this.op = op;
         this.expr = expr;
+        this.e_type = ExprType.UnopExpr;
     }
 
     public String getOp() {
@@ -88,6 +208,7 @@ class IdExpr extends Expr {
     private String name;
     IdExpr(String name) {
         this.name = name;
+        this.e_type = ExprType.IdExpr;
     }
 
     public String getName() {
@@ -99,6 +220,7 @@ class  IntLiteralExpr extends Expr {
     private Integer value;
     IntLiteralExpr(int val) {
         this.value = value;
+        this.e_type = ExprType.IntLiteralExpr;
     }
 
     public Integer getValue() {
@@ -110,6 +232,7 @@ class BoolLiteralExpr extends Expr {
     private Boolean value;
     BoolLiteralExpr(boolean value) {
         this.value = value;
+        this.e_type = ExprType.BoolLiteralExpr;
     }
 
     public Boolean getValue() {
@@ -123,6 +246,7 @@ class FunctionCallExpr extends Expr {
     FunctionCallExpr(String name, Expr[] args) {
         this.name = name;
         this.args = args;
+        this.e_type = ExprType.FunctionCallExpr;
     }
 
     public String getName() {
@@ -134,12 +258,20 @@ class FunctionCallExpr extends Expr {
     }
 }
 
-abstract class Stmt {}
+abstract class Stmt {
+    public StmtType s_type;
+
+    public StmtType getS_type() {
+        return s_type;
+    }
+}
 
 class FunctionReturnStmt extends Stmt {
     private Expr returnExpr;
     FunctionReturnStmt(Expr returnExpr) {
         this.returnExpr = returnExpr;
+        this.s_type = StmtType.FunctionReturnStmt;
+
     }
 
     public Expr getReturnExpr() {
@@ -154,6 +286,7 @@ class IfStmt extends Stmt {
     IfStmt(Expr guard, Stmt thenStmt) {
         this.thenStmt = thenStmt;
         this.guard = guard;
+        this.s_type = StmtType.IfStmt;
     }
 }
 
@@ -166,6 +299,7 @@ class IfElseStmt extends Stmt {
         this.elseStmt = elseStmt;
         this.thenStmt = thenStmt;
         this.guard = guard;
+        this.s_type = StmtType.IfElseStmt;
     }
 }
 
@@ -176,6 +310,7 @@ class WhileStmt extends Stmt {
     WhileStmt(Expr guard, Stmt doStmt) {
         this.guard = guard;
         this.doStmt = doStmt;
+        this.s_type = StmtType.WhileStmt;
     }
 
     public Expr getGuard() {
@@ -194,6 +329,7 @@ class ProcedureCallStmt extends Stmt {
     public ProcedureCallStmt(String name, Expr[] args) {
         this.name = name;
         this.args = args;
+        this.s_type = StmtType.ProcedureCallStmt;
     }
 
     public String getName() {
@@ -212,6 +348,7 @@ class AssignStmt extends Stmt {
     public AssignStmt(Expr left, Expr right) {
         this.left = left;
         this.right = right;
+        this.s_type = StmtType.AssignStmt;
     }
 
     public Expr getLeft() {
@@ -230,6 +367,7 @@ class MultiAssignStmt extends Stmt {
     public MultiAssignStmt(Expr[] left, Expr[] right) {
         this.left = left;
         this.right = right;
+        this.s_type = StmtType.MultiAssignStmt;
     }
 
     public Expr[] getLeft() {
@@ -247,6 +385,7 @@ class DeclStmt extends Stmt {
 
     public DeclStmt(Pair<String, Type> decl) {
         this.decl = decl;
+        this.s_type = StmtType.DeclStmt;
     }
 
     public Pair<String, Type> getDecl() {
@@ -259,6 +398,7 @@ class MultiDeclStmt extends Stmt {
 
     public MultiDeclStmt(Pair<String, Type>[] decls) {
         this.decls = decls;
+        this.s_type = StmtType.MultiDeclStmt;
     }
 
     public Pair<String, Type>[] getDecls() {
@@ -271,6 +411,7 @@ class BlockStmt extends Stmt {
 
     public BlockStmt(Stmt[] statements) {
         this.statements = statements;
+        this.s_type = StmtType.BlockStmt;
     }
 
     public BlockStmt() {    //empty block
@@ -291,6 +432,7 @@ class BlockStmt extends Stmt {
 
 //definitions are for program files
 abstract class Defn {
+    public boolean isProcedure;
 }
 
 class FunctionDefn extends Defn {
@@ -386,6 +528,10 @@ class FunctionDecl extends Decl {
     public Type getOutput() {
         return output;
     }
+
+    public boolean isProcedure() {
+        return false;
+    }
 }
 
 class ProcedureDecl extends Decl {
@@ -404,35 +550,64 @@ class ProcedureDecl extends Decl {
     public Pair<String, Type>[] getParams() {
         return params;
     }
+
+    public boolean isProcedure() {
+        return true;
+    }
 }
 
 //top level "nodes"
-class InterfaceFile {
-    private Decl[] declarations;
+abstract class SourceFile {
+    abstract boolean isInterface();
+}
 
-    public InterfaceFile(Decl[] declarations) {
-        this.declarations = declarations;
+
+class InterfaceFile extends SourceFile {
+    private ArrayList<Decl> declarations;
+
+    public InterfaceFile(List<Decl> declarations) {
+        this.declarations = new ArrayList<>(declarations);
     }
 
-    public Decl[] getDeclarations() {
+    public List<Decl> getDeclarations() {
         return declarations;
+    }
+
+    public void addDecl(Decl decl) {
+        declarations.add(decl);
+    }
+
+    public boolean isInterface() {
+        return true;
     }
 }
 
-class ProgramFile {
-    private UseInterface[] imports;
-    private Defn[] definitions;
+class ProgramFile extends SourceFile {
+    private ArrayList<UseInterface> imports;
+    private ArrayList<Defn> definitions;
 
-    public ProgramFile(UseInterface[] imports, Defn[] definitions) {
-        this.imports = imports;
-        this.definitions = definitions;
+    public ProgramFile(List<UseInterface> imports, List<Defn> definitions) {
+        this.imports = new ArrayList<>(imports);
+        this.definitions = new ArrayList<>(definitions);
     }
 
-    public UseInterface[] getImports() {
+    public List<UseInterface> getImports() {
         return imports;
     }
 
-    public Defn[] getDefinitions() {
+    public List<Defn> getDefinitions() {
         return definitions;
+    }
+
+    public void addDefn(Defn defn) {
+        definitions.add(defn);
+    }
+
+    public void addImport(UseInterface use) {
+        imports.add(use);
+    }
+
+    public boolean isInterface() {
+        return false;
     }
 }
